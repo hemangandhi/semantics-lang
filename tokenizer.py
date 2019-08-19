@@ -20,3 +20,5 @@ def tokenize(char_iter):
                 yield char
         else:
             acc += char
+    if acc != '':
+        yield acc
