@@ -1,19 +1,22 @@
+"""
+Basic lexer and parser for the sematics-lang
+"""
 
 def tokenize(char_iter):
+    """
+    Given an input stream (any iterator over strs),
+    tokenizes the input as per the tokens in the readme.
+    """
     def is_delim(char):
-        return char.isspace() or char in ['(', ')']
+        return char.isspace() or char in ['(', ')', '?', ':']
 
     acc = ''
     for char in char_iter:
         if is_delim(char):
-            if len(acc) > 0: yield acc
+            if acc != '':
+                yield acc
             acc = ''
-            if char == '(' or char == ')':
+            if not char.isspace():
                 yield char
-        elif char == '?' or char == ':':
-            if len(acc) > 0: yield acc
-            acc = ''
-            acc += char
         else:
             acc += char
-

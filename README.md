@@ -53,9 +53,9 @@ Here are some regexs (like python regexes) for the tokens:
 The BNF is as follows:
 
 ```
+F := P | P P
 P := S | S type
-S := token | (L)
-L := S | S S
+S := token | (P)
 ```
 
 The intent is to play with semantics and perhaps syntax, so this is kept really, really minimal.
