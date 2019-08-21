@@ -47,22 +47,24 @@ The language will have a few builtin types in some system-F like semantics:
 Here are some regexs (like python regexes) for the tokens:
 
 - `delim := [\s\(\)]`
-- `type := ?[^(\(\))]+:.+` (parentheses might appear in the type to describe generics, but generic semantics so far make no sense).
+- `semantics := [^(\(\))]+` (parentheses might appear in the type to describe generics, but generic semantics so far make no sense).
 - `token := [^(\s\(\)?:]+`
 
 The BNF is as follows:
 
 ```
 F := P | P P
-P := S | S type
+P := S | S ? sematics : T
 S := token | (P)
+T := token | (token  TL)
+TL := ?semantics : T | ?semantics : T TL
 ```
 
 The intent is to play with semantics and perhaps syntax, so this is kept really, really minimal.
 
 # TODO
 
-- [ ] make this a real python project with a `requirements.txt` and testing, linting, CI/CD.
+- [x] make this a real python project with a `requirements.txt` and testing, linting, CI/CD.
 - [ ] lex and parse properly
 - [ ] interpret basic math (and type error as needed)
 - [ ] support functions with type checking
