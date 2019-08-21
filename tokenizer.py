@@ -22,3 +22,23 @@ def tokenize(char_iter):
             acc += char
     if acc != '':
         yield acc
+
+def prepend_to_iter(prepend, it):
+    yield prepend
+    yield from it
+
+def evaluate(tokens, context):
+    try:
+        t = next(tokens)
+        if t == '(':
+            calling = evaluate(tokens, context)
+            nt = next(tokens)
+            args = []
+            while nt != ')':
+                args.append(evaluate(prepend_to_iter(nt, tokens), context))
+                nt = next(tokens)
+            return context.call(calling, args)
+        else:
+            return context.literal(t)
+    except StopIteration:
+        raise ValueError("Expected a token")

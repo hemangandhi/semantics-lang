@@ -1,5 +1,6 @@
 import tokenizer as tok
 
+from functools import reduce
 import pytest
 
 def test_basic_tokens():
@@ -8,3 +9,16 @@ def test_basic_tokens():
     assert list(tok.tokenize("(+ 1 1)?F:int")) == ['(', '+', '1', '1', ')', '?', 'F', ':', 'int']
     assert list(tok.tokenize("(+ 1 1) ?F :int")) == ['(', '+', '1', '1', ')', '?', 'F', ':', 'int']
 
+def test_eval():
+    class PlusTimesCtx:
+        def literal(self, val):
+            if not val.is_digit():
+                raise ValueError("Nan")
+            return int(val)
+        def call(self, fn, args):
+            if fn not in ['+', '*']:
+                raise ValueError("Not a function")
+            return reduce(lambda x, y: {'+': x + y, '*': x * y}[fn], args, {'+': 0, '*': 1}[fn])
+
+    pt = PlusTimesCtx()
+    assert tok.evaluate(tok.tokenize("(+ 1 1)"), pt) == 2
