@@ -12,7 +12,7 @@ def test_basic_tokens():
 def test_eval():
     class PlusTimesCtx:
         def literal(self, val):
-            if not val.is_digit():
+            if not val.isdigit():
                 raise ValueError("Nan")
             return int(val)
         def call(self, fn, args):
@@ -22,3 +22,4 @@ def test_eval():
 
     pt = PlusTimesCtx()
     assert tok.evaluate(tok.tokenize("(+ 1 1)"), pt) == 2
+    assert tok.evaluate(tok.tokenize("(+ (* 1 1 1) 1)"), pt) == 2
