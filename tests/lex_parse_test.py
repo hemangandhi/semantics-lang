@@ -13,6 +13,8 @@ def test_eval():
     class PlusTimesCtx:
         def literal(self, val):
             if not val.isdigit():
+                if val in ['*', '+']:
+                    return val
                 raise ValueError("Nan")
             return int(val)
         def call(self, fn, args):
