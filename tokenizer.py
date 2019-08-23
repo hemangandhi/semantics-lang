@@ -35,6 +35,9 @@ class AbstractContext:
     def validate_type(self, literal, semantics, type):
         pass
 
+def parse_type(tokens, context, index):
+    return 0, 0
+
 def evaluate(tokens, context, index = 0):
     if index >= len(tokens):
         raise ValueError("Expected tokens")
@@ -49,6 +52,11 @@ def evaluate(tokens, context, index = 0):
         if tokens[index] != ')':
             raise ValueError("Expected tokens")
         evaled = context.call(calling, args)
-        return evaled, index + 1
     else:
-        return context.literal(t), index + 1
+        evaled = context.literal(t)
+    if index + 1 < len(tokens) and tokens[index + 1] == '?':
+        semantics, typ, index = parse_type(tokens, context, index + 1)
+        if context.validate_type(evaled, semantics, typ):
+            return evaled, index
+    else:
+        return evaled, index + 1
