@@ -24,6 +24,6 @@ def test_eval():
             return reduce(lambda x, y: {'+': x + y, '*': x * y}[fn], args, {'+': 0, '*': 1}[fn])
 
     pt = PlusTimesCtx()
-    assert tok.evaluate(tok.tokenize("(+ 1 1)"), pt) == 2
+    assert tok.evaluate(list(tok.tokenize("(+ 1 1)")), pt)[0] == 2
     tm = list(tok.tokenize("(+ (* 1 1 1) 1)"))
-    assert tok.evaluate(iter(tm), pt) == 2
+    assert tok.evaluate(tm, pt)[0] == 2

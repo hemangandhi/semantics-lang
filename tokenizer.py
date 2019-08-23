@@ -23,22 +23,32 @@ def tokenize(char_iter):
     if acc != '':
         yield acc
 
-def prepend_to_iter(prepend, it):
-    yield prepend
-    yield from it
+class AbstractContext:
+    def literal(self, token):
+        pass
+    def call(self, fn, *args):
+        pass
+    def get_semantics(self, name):
+        pass
+    def get_type(self, semantics, name):
+        pass
+    def validate_type(self, literal, semantics, type):
+        pass
 
-def evaluate(tokens, context):
-    try:
-        t = next(tokens)
-        if t == '(':
-            calling = evaluate(tokens, context)
-            nt = next(tokens)
-            args = []
-            while nt != ')':
-                args.append(evaluate(prepend_to_iter(nt, tokens), context))
-                nt = next(tokens)
-            return context.call(calling, args)
-        else:
-            return context.literal(t)
-    except StopIteration:
-        raise ValueError("Expected a token")
+def evaluate(tokens, context, index = 0):
+    if index >= len(tokens):
+        raise ValueError("Expected tokens")
+
+    t = tokens[index]
+    if t == '(':
+        calling, index = evaluate(tokens, context, index + 1)
+        args = []
+        while tokens[index] != ')' and index < len(tokens):
+            arg, index = evaluate(tokens, context, index)
+            args.append(arg)
+        if tokens[index] != ')':
+            raise ValueError("Expected tokens")
+        evaled = context.call(calling, args)
+        return evaled, index + 1
+    else:
+        return context.literal(t), index + 1
