@@ -8,6 +8,7 @@ def test_basic_tokens():
     assert list(tok.tokenize("(+ 121 1 (* 2 3))")) == ['(', '+', '121', '1', '(', '*', '2', '3', ')', ')']
     assert list(tok.tokenize("(+ 1 1)?F:int")) == ['(', '+', '1', '1', ')', '?', 'F', ':', 'int']
     assert list(tok.tokenize("(+ 1 1) ?F :int")) == ['(', '+', '1', '1', ')', '?', 'F', ':', 'int']
+    assert list(tok.tokenize("(+ (* 1 1 1) 1)")) == ['(', '+', '(', '*', '1', '1', '1', ')', '1', ')']
 
 def test_eval():
     class PlusTimesCtx:
@@ -24,4 +25,5 @@ def test_eval():
 
     pt = PlusTimesCtx()
     assert tok.evaluate(tok.tokenize("(+ 1 1)"), pt) == 2
-    assert tok.evaluate(tok.tokenize("(+ (* 1 1 1) 1)"), pt) == 2
+    tm = list(tok.tokenize("(+ (* 1 1 1) 1)"))
+    assert tok.evaluate(iter(tm), pt) == 2
