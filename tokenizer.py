@@ -52,10 +52,10 @@ def parse_type(tokens, context, index):
         base_type = tokens[index + 4]
         index += 5
         args = []
-        while index < len(tokens) and tokens[index]:
+        while index < len(tokens) and tokens[index] != ')':
             sem, typ, index = parse_type(tokens, context, index)
             args.append((sem, typ))
-        if tokens >= len(tokens) and tokens[index] != ')':
+        if index >= len(tokens) or tokens[index] != ')':
             raise ValueError("Expected )")
         return semantics, context.get_type(semantics, base_type, *args), index + 1
     else:
