@@ -1,11 +1,17 @@
 """
 Basic lexer and parser for the sematics-lang
+
+Also the abstract base class for contexts
+hereafter.
 """
 
 def tokenize(char_iter):
     """
     Given an input stream (any iterator over strs),
     tokenizes the input as per the tokens in the readme.
+
+    Yields:
+      tokens
     """
     def is_delim(char):
         return char.isspace() or char in ['(', ')', '?', ':']
@@ -24,15 +30,58 @@ def tokenize(char_iter):
         yield acc
 
 class AbstractContext:
-    def literal(self, token):
+    """
+    Abstract base for all the contexts.
+    Doesn't include any of the functionality,
+    just the interface. See `context.py`
+    for the basic implementation.
+
+    Recall that the context is a part of
+    an evaluator, not a compiler.
+    """
+    def literal(self, token: str):
+        """
+        Given a literal token -- with no
+        type context.
+        """
         pass
-    def call(self, fn, *args):
+    def call(self, fn: str, *args):
+        """
+        Function call on evaluated arguments.
+
+        Args:
+          fn: str = is an unevaluated string literal
+          args: the evaluated arguments passed to the function
+        """
         pass
-    def get_semantics(self, name):
+    def get_semantics(self, name: str):
+        """
+        Get the semantics of a name.
+        This will be passed back to the context.
+        """
         pass
     def get_type(self, semantics, name, *generic_args):
+        """
+        Gets the type in the semantics with the name passed in.
+        Generic arguments are also passed in with semantics.
+
+        Args:
+          semantics = a type of semantics returned by `self.get_semantics`.
+          name: str = the name of the type at the root.
+          generic_args = types that are being passed in as generic parameters.
+        Returns:
+          any type tag
+        """
         pass
-    def validate_type(self, literal, semantics, type):
+    def validate_type(self, literal, semantics, type) -> bool:
+        """
+        Given an evaluated literal, ensures that it is of the type
+        an valid in the semantics. Note that both the semantics and type
+        will have been from `get_semantics` and `get_type` respectively.
+
+        Returns:
+          bool = whether the evaluated literal sound type check.
+        """
         pass
 
 def parse_type(tokens, context, index):
@@ -62,6 +111,15 @@ def parse_type(tokens, context, index):
         return semantics, context.get_type(semantics, tokens[index + 3], []), index + 4
 
 def evaluate(tokens, context, index = 0):
+    """
+    Evaluate the *list* of tokens in the context,
+    starting at index provided.
+
+    Raises: (Note that the context may raise exceptions too)
+      ValueError = parsing issues with the token list or a type error.
+    Returns:
+      The evaluation of the code.
+    """
     if index >= len(tokens):
         raise ValueError("Expected tokens")
 
