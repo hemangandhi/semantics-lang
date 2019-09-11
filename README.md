@@ -65,8 +65,8 @@ The intent is to play with semantics and perhaps syntax, so this is kept really,
 # TODO
 
 - [x] make this a real python project with a `requirements.txt` and testing, linting, CI/CD.
-- [ ] lex and parse properly
-- [ ] interpret basic math (and type error as needed)
+- [x] lex and parse properly
+- [x] interpret basic math (and type error as needed)
 - [ ] support functions with type checking
 - [ ] support type definitions
 - [ ] support foralls
