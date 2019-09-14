@@ -78,7 +78,8 @@ class AbstractContext:
         call the function with a context where the arguments are bound.
         Binding has to do with semantics, so the bindings are manged therein.
 
-        args are paired with any type annotations present (None if there is no annotation for the argument).
+        args are paired with any semantics and type annotations present
+        (None if there is no annotation for the argument).
 
         Returns: anything the context will think is a function.
         (in case it's also being invoked on the spot)
