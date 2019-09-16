@@ -104,7 +104,6 @@ class SpecialForm(Type):
 
 class BaseContext(AbstractContext):
     def __init__(self, evaluator, lexical_vars = {'def!': ('def!', SpecialForm())}):
-        #shame the plural of semantics is semantics... eh, semantics
         self.lexical_vars = lexical_vars
         self.eval = evaluator
     def check_type(self, value, typ):
