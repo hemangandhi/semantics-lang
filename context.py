@@ -2,11 +2,7 @@
 Defines the base context which
 includes the general interfaces for defining
 contexts and types therein.
-
-The abstract class is with the tokenizer for
-convenience.
 """
-from enum import Enum
 
 class AbstractContext:
     """
@@ -86,18 +82,44 @@ class AbstractContext:
         """
         pass
 
+# For a basic language with functions, the only generic type is the function type
+# denoted -> for us. It looks like this: `data Type = SpecialForm | Float | String | Function [Type]`
+class Type:
+    pass
+
+class Float(Type):
+    pass
+
+class String(Type):
+    pass
+
+class Function(Type):
+    def __init__(self, inners):
+        self.gen = inners
+
+class SpecialForm(Type):
+    pass
+
+# Now for the actual context...
+
 class BaseContext(AbstractContext):
-    def __init__(self,
-            # None of these defaults make much sense...
-            fns = lambda f: lambda g: None,
-            lexical_vars = {},
-            semantics = lambda n: lambda t: t,
-            types = lambda n, a: None):
+    def __init__(self, evaluator, lexical_vars = {'def!': ('def!', SpecialForm())}):
         #shame the plural of semantics is semantics... eh, semantics
-        self.fns = fns
         self.lexical_vars = lexical_vars
-        self.semantics = semantics
-        self.types = types
+        self.eval = evaluator
+    def check_type(self, value, typ):
+        if type(typ) == Float:
+            return type(value) == float
+        if type(typ) == String:
+            return type(value) == str
+        if type(typ) == SpecialForm:
+            return value == 'def!'
+        if type(typ) == Function:
+            # Escape hatch 1: don't know how to assert
+            # recursive details about types
+            return hasattr(value, '__call__')
+        # Escape hatch 2: no annotation means OK type
+        return True
     def literal(self, token):
         if token in self.lexical_vars:
             return self.lexical_vars[token]
@@ -106,49 +128,36 @@ class BaseContext(AbstractContext):
         else:
             return float(token)
     def call(self, fn, *args):
-        return self.fns(fn)(*args)
+        if fn not in self.lexical_vars:
+            raise ValueError("Undefined lexical variable " + fn)
+        if type(self.lexical_vars[fn][1]) != Function:
+            raise ValueError("The lexical variable provided in not a function: " + fn)
+        fn_type = self.lexical_vars[fn][1]
+        if len(args) != len(fn_type.gen) - 1:
+            raise ValueError("Arity incorrect, expected {} args.".format(len(fn_type.gen) - 1))
+        if any(not self.check_type(arg, typ) for arg, typ in zip(args, fn_type.gen[:-1])):
+            raise ValueError("Type error in function invocation of {} and args {}".format(fn, args))
+        return self.lexical_vars[fn][0](*args)
     def get_semantics(self, name):
-        return self.semantics(name)
+        # TODO: have semantics definitions
+        return None
     def get_type(self, semantics, name, *args):
-        return self.types(name, args)
-    def validate_type(self, literal, semantics, typ):
-        return semantics(typ, literal)
-
-
-# For a basic language with functions, the only generic type is the function type
-# denoted -> for us. (So Haskell's int -> int -> int would be ?F:(-> ?F:int ?F:(-> ?F:int ?F:int)))
-
-class Type(Enum):
-    """
-    Half-assed ADT for the types in the basic language with functions.
-    Haskell: data Type = Float | String | Function Type Type
-    """
-    FLOAT = (())
-    STRING = (())
-    FUNCTION = ((None, None))
-    def __init__(self, generics):
-        self.gen = generics
-    def validate_literal(self, literal):
-        if self == Type.FLOAT:
-            return type(literal) == float
-        elif self == Type.STRING:
-            return type(literal) == str
-        else:
-            # TODO: have an actual function type that... works (god damn I want ADTs)
-            return hasattr(literal, '__call__')
-    @staticmethod
-    def from_str(name, args):
         if name == 'string':
-            if len(args) > 0:
-                raise TypeError("Cannot pass generic arguments to string type")
-            return Type.STRING
-        elif name == 'float':
-            if len(args) > 0:
-                raise TypeError("Cannot pass generic arguments to float type")
-            return Type.FLOAT
-        elif name == "->":
-            if len(args) != 2:
-                raise TypeError("-> type takes precisely 2 parameters!!")
-            fn = Type.FUNCTION
-            fn.gen = (args[0], args[1])
-            return fn
+            return String()
+        if name == 'float':
+            return Float
+        if name == '->':
+            return Function(*args)
+        raise ValueError("Unknown type {} passed in".format(name))
+    def validate_type(self, literal, semantics, typ):
+        return self.check_type(literal, typ)
+    def is_abstraction_fn(self, literal):
+        return literal == 'def!'
+    def make_abstraction(self, name, args, body):
+        def calling_thing(*args_passed):
+            inner_lex = self.lexical_vars.copy()
+            for value, arg_info in zip(args_passed, args):
+                inner_lex[arg_info[0]] = (value, arg_info[2])
+            return self.eval(body, BaseContext(self.eval, inner_lex))
+        self.lexical_vars[name] = (calling_thing, Function(tuple(map(lambda a: a[2], args) + (None,))))
+        return calling_thing

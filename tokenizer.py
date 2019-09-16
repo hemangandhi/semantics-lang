@@ -99,7 +99,6 @@ def parse_abstraction(tokens, context, index):
         raise ValueError("Expected closing parens to end function definition")
     return context.make_abstraction(name, args, u_parse), index + 2
 
-
 def evaluate(tokens, context, index = 0):
     """
     Evaluate the *list* of tokens in the context,
