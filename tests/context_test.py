@@ -65,3 +65,15 @@ def test_base_make_abstraction():
     assert abs(abstraction[0][0](1.5) - 2.5) < 0.01
     assert ctx.lexical_vars['inc'] == abstraction
     assert ctx.lexical_vars['inc'][1] == ctxs.Function((ctxs.Float(), None))
+
+# TODO: if needs to be a SpecialForm, so we have to parse those more generally before trying this sort of
+# thing.
+# def test_base_recursion():
+#     program = """
+# (def! triangle-sum (x?F:float) (if (= x 0) 0 (+ x (triangle-sum (- x 1)))))
+#     """
+#     literals = {
+#         '-': ((lambda x, y: x - y, '-'), ctxs.Function(ctxs.Float(), ctxs.Float(), ctxs.Float())),
+#         '+': ((lambda x, y: x + y, '+'), ctxs.Function(ctxs.Float(), ctxs.Float(), ctxs.Float())),
+#         'if': ((lambda c, t, e: 
+#     }
