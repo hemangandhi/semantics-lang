@@ -26,24 +26,42 @@ def test_base_literal():
     ctx = ctxs.BaseContext(tok.evaluate, literals)
     assert type(ctx.literal('9.5')) == float
     assert type(ctx.literal('"This is not yet OK by the tokenizer"')) == str
-    assert ctx.literal('foo') == (9.0, ctxs.Float())
-    assert ctx.literal('bar') == ("LOL spaces ain't supported", ctxs.String())
+    assert ctx.literal('foo') == 9.0
+    assert ctx.literal('bar') == "LOL spaces ain't supported"
     expect_value_error(lambda: ctx.literal('baz'))
 
 def test_base_call():
     literals = {
-        'foo': (9, ctxs.Float),
+        'foo': (9, ctxs.Float()),
         'bar': ("LOL spaces ain't supported", ctxs.String()),
-        'fn': (lambda x: x, ctxs.Function((None, None))),
-        'inc': (lambda x: x + 1, ctxs.Function((ctxs.Float(), ctxs.Float())))
+        'fn': ((lambda x: x, 'fn'), ctxs.Function((None, None))),
+        'inc': ((lambda x: x + 1, 'inc'), ctxs.Function((ctxs.Float(), ctxs.Float())))
     }
     ctx = ctxs.BaseContext(tok.evaluate, literals)
     expect_value_error(lambda: ctx.call('halp'))
     expect_value_error(lambda: ctx.call('foo'))
     expect_value_error(lambda: ctx.call('fn'))
-    expect_value_error(lambda: ctx.call('fn', 1, 2))
-    expect_value_error(lambda: ctx.call('inc', 1, 2))
-    expect_value_error(lambda: ctx.call('inc', '1, 2'))
-    assert abs(ctx.call('inc', 1.5) - 2.5) < 0.01
-    assert ctx.call('fn', 'heh') == 'heh'
-    assert ctx.call('fn', 5.6) == 5.6
+    expect_value_error(lambda: ctx.call(literals['fn'], 1, 2))
+    expect_value_error(lambda: ctx.call(literals['inc'], 1, 2))
+    expect_value_error(lambda: ctx.call(literals['inc'], '1, 2'))
+    assert abs(ctx.call(literals['inc'], 1.5) - 2.5) < 0.01
+    assert ctx.call(literals['fn'], 'heh') == 'heh'
+    assert ctx.call(literals['fn'], 5.6) == 5.6
+
+def test_base_type_getter():
+    ctx = ctxs.BaseContext(tok.evaluate)
+    assert ctx.get_type(None, 'string') == ctxs.String()
+    assert ctx.get_type(None, 'float') == ctxs.Float()
+    assert ctx.get_type(None, '->', ctxs.Float(), ctxs.Float())\
+            == ctxs.Function((ctxs.Float(), ctxs.Float()))
+    expect_value_error(lambda: ctx.get_type(None, 'not-a-type'))
+
+def test_base_make_abstraction():
+    literal = {
+        '+': ((lambda x, y: x + y, '+'), ctxs.Function((None, None, None)))
+    }
+    ctx = ctxs.BaseContext(tok.evaluate, literal)
+    abstraction = ctx.make_abstraction('inc', (('x', None, ctxs.Float()),), ['(', '+', 'x', '1', ')'])
+    assert abs(abstraction[0][0](1.5) - 2.5) < 0.01
+    assert ctx.lexical_vars['inc'] == abstraction
+    assert ctx.lexical_vars['inc'][1] == ctxs.Function((ctxs.Float(), None))

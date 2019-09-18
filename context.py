@@ -125,22 +125,26 @@ class BaseContext(AbstractContext):
         return True
     def literal(self, token):
         if token in self.lexical_vars:
-            return self.lexical_vars[token]
+            if type(self.lexical_vars[token][1]) == Function:
+                return self.lexical_vars[token]
+            return self.lexical_vars[token][0]
         elif token.startswith('"') and token.endswith('"'):
             return token[1:len(token) - 1]
         else:
             return float(token)
     def call(self, fn, *args):
-        if fn not in self.lexical_vars:
-            raise ValueError("Undefined lexical variable " + fn)
-        if type(self.lexical_vars[fn][1]) != Function:
-            raise ValueError("The lexical variable provided in not a function: " + fn)
-        fn_type = self.lexical_vars[fn][1]
+        if type(fn[0]) != tuple:
+            raise ValueError("Non-function {} passed in".format(fn))
+        if fn[0][1] not in self.lexical_vars:
+            raise ValueError("Undefined lexical variable " + str(fn))
+        if type(self.lexical_vars[fn[0][1]][1]) != Function:
+            raise ValueError("The lexical variable provided in not a function: " + str(fn))
+        fn_type = self.lexical_vars[fn[0][1]][1]
         if len(args) != len(fn_type.gen) - 1:
-            raise ValueError("Arity incorrect, expected {} args.".format(len(fn_type.gen) - 1))
+            raise ValueError("Arity incorrect, {} expected {} args.".format(fn[0][1], len(fn_type.gen) - 1))
         if any(not self.check_type(arg, typ) for arg, typ in zip(args, fn_type.gen[:-1])):
             raise ValueError("Type error in function invocation of {} and args {}".format(fn, args))
-        return self.lexical_vars[fn][0](*args)
+        return self.lexical_vars[fn[0][1]][0][0](*args)
     def get_semantics(self, name):
         # TODO: have semantics definitions
         return None
@@ -148,9 +152,9 @@ class BaseContext(AbstractContext):
         if name == 'string':
             return String()
         if name == 'float':
-            return Float
+            return Float()
         if name == '->':
-            return Function(*args)
+            return Function(args)
         raise ValueError("Unknown type {} passed in".format(name))
     def validate_type(self, literal, semantics, typ):
         return self.check_type(literal, typ)
@@ -161,6 +165,8 @@ class BaseContext(AbstractContext):
             inner_lex = self.lexical_vars.copy()
             for value, arg_info in zip(args_passed, args):
                 inner_lex[arg_info[0]] = (value, arg_info[2])
-            return self.eval(body, BaseContext(self.eval, inner_lex))
-        self.lexical_vars[name] = (calling_thing, Function(tuple(map(lambda a: a[2], args) + (None,))))
-        return calling_thing
+            inner_lex[name] = ((calling_thing, name), Function(tuple(map(lambda a: a[2], args)) + (None,)))
+            return self.eval(body, BaseContext(self.eval, inner_lex))[0]
+        new_binding = ((calling_thing, name), Function(tuple(map(lambda a: a[2], args)) + (None,)))
+        self.lexical_vars[name] = new_binding
+        return new_binding

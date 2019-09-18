@@ -127,7 +127,7 @@ def evaluate(tokens, context, index = 0):
                 args.append(arg)
             if tokens[index] != ')':
                 raise ValueError("Expected tokens")
-            evaled = context.call(calling, args)
+            evaled = context.call(calling, *args)
     else:
         evaled = context.literal(t)
     if index + 1 < len(tokens) and tokens[index + 1] == '?':

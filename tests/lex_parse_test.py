@@ -17,7 +17,7 @@ class PlusTimesCtx:
                 return val
             raise ValueError("Nan")
         return int(val)
-    def call(self, fn, args):
+    def call(self, fn, *args):
         if fn not in ['+', '*']:
             raise ValueError("Not a function")
         return reduce(lambda x, y: {'+': x + y, '*': x * y}[fn], args, {'+': 0, '*': 1}[fn])
