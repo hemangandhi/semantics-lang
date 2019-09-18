@@ -85,7 +85,8 @@ class AbstractContext:
 # For a basic language with functions, the only generic type is the function type
 # denoted -> for us. It looks like this: `data Type = SpecialForm | Float | String | Function [Type]`
 class Type:
-    pass
+    def __eq__(self, other):
+        return type(self) == type(other)
 
 class Float(Type):
     pass
@@ -96,6 +97,9 @@ class String(Type):
 class Function(Type):
     def __init__(self, inners):
         self.gen = inners
+    def __eq__(self, other):
+        return type(self) == type(other) \
+                and all(s == o or s is None or o is None for s, o in zip(self.gen, other.gen))
 
 class SpecialForm(Type):
     pass
