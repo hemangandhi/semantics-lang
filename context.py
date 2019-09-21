@@ -89,9 +89,9 @@ class AbstractContext:
         pass
 
 class BaseContext(AbstractContext):
-    def __init__(self, evaluator, lexical_vars = {'def!': ('def!', SpecialForm())}):
+    def __init__(self, evaluator, lexical_vars):
         self.lexical_vars = lexical_vars
-        self.eval = evaluator
+        self.evaler = evaluator
     def check_type(self, value, typ):
         if type(typ) == Float:
             return type(value) == float
@@ -152,3 +152,5 @@ class BaseContext(AbstractContext):
         new_binding = ((calling_thing, name), Function(tuple(map(lambda a: a[2], args)) + (None,)))
         self.lexical_vars[name] = new_binding
         return new_binding
+    def eval(self, tokens, index):
+        return self.evaler(tokens, index)

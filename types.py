@@ -52,18 +52,38 @@ class SpecialForm(Type):
         return False
 
 class SpecialFormSpec(Enum):
+    """
+    The types of argument passed to a special form's instantiation.
+    An "name" is expected to be a variable name, a list of names a
+    list of whitespace delimited names within a pair of parenthesis.
+    Expr is any expression -- it is not evaluated. Evaled_expr are
+    evaluated.
+    """
     NAME = 1,
     LIST_OF_NAME = 2,
     EXPR = 3,
     EVALED_EXPR = 4
 
 class SpecialFormFactory:
+    """
+    Makes and stores special forms.
+
+    An instance is aware of all the forms it's called to support and will
+    create classes that parse the arguments and then call a function to have
+    the true binding processed.
+    """
     def __init__(self, non_literals):
         self.forms = dict()
         self.non_literal = non_literals
     def __contains__(self, name):
         return name in self.forms
+    def __getitem__(self, name):
+        return self.forms[name]
     def ensure_is_name(self, token):
+        """
+        Ensure that the token is a name -- not any of the literals known to the
+        language.
+        """
         if token in self.non_literal:
             raise ValueError("Expected identifier not {}".format(token))
         try:
@@ -72,7 +92,19 @@ class SpecialFormFactory:
             return token
         else:
             raise ValueError("{} is not an identifier".format(token))
-    def __call__(self, name, *allowed_sub_bodies):
+    def __call__(self, name, binder, *allowed_sub_bodies):
+        """
+        Adds an instance of a special form to the factory.
+
+        The name is the name of the special form, the binder gets the parsed arguments
+        to bind to the context. The allowed_sub_bodies are expected to be specs for the
+        arguments.
+
+        Returns: a special form that, when evaluated, parses, and then binds as per the binder.
+                 (Calls the binder.) Recall that this returns as class, so it'll have to be
+                 instantiated per occurance of the intended special form (so that the binding
+                 also functions as expected).
+        """
         factory_self = self
         class DefinedSpecialForm(SpecialForm):
             def evaluate(self, tokens, context, index):
@@ -123,7 +155,7 @@ class SpecialFormFactory:
                         bind, index = context.eval(tokens, index)
                 if index + 1 >= len(tokens) or tokens[index + 1]:
                     raise ValueError("Expected closing paren")
-                self.bind(bindings)
+                self.bind(binder(bindings))
                 return self, index + 2
 
         # indentation: outside the inner class now (factory_self and self are the same here)
