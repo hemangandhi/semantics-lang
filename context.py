@@ -3,6 +3,7 @@ Defines the base context which
 includes the general interfaces for defining
 contexts and types therein.
 """
+from types import *
 
 class AbstractContext:
     """
@@ -81,30 +82,11 @@ class AbstractContext:
         (in case it's also being invoked on the spot)
         """
         pass
-
-# For a basic language with functions, the only generic type is the function type
-# denoted -> for us. It looks like this: `data Type = SpecialForm | Float | String | Function [Type]`
-class Type:
-    def __eq__(self, other):
-        return type(self) == type(other)
-
-class Float(Type):
-    pass
-
-class String(Type):
-    pass
-
-class Function(Type):
-    def __init__(self, inners):
-        self.gen = inners
-    def __eq__(self, other):
-        return type(self) == type(other) \
-                and all(s == o or s is None or o is None for s, o in zip(self.gen, other.gen))
-
-class SpecialForm(Type):
-    pass
-
-# Now for the actual context...
+    def eval(self, tokens, index):
+        """
+        Evaluator used in parsing special forms.
+        """
+        pass
 
 class BaseContext(AbstractContext):
     def __init__(self, evaluator, lexical_vars = {'def!': ('def!', SpecialForm())}):
