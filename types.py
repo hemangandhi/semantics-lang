@@ -10,19 +10,26 @@ For independence with the context and evaluator, none of the special forms that 
 from enum import Enum
 
 class Type:
-    def __init__(self):
-        self.binding = None
+    def __init__(self, name=None, binding=None):
+        self.name = name
+        if binding is None or self.validate_py(binding):
+            self.binding = binding
+        else:
+            raise ValueError("{} is not a valid {}".format(binding, type(self)))
     def __eq__(self, other):
         """
         Handy for type checking: ensures that the instances are the same type of type.
         """
         return type(self) == type(other)
     def validate_py(self, value):
-        return False
+        # supports having Type stand in for unqualified types.
+        return True
     def bind(self, value):
         if not self.validate_py(value):
             raise ValueError("{} is not a valid {}".format(value, type(self)))
         self.binding = value
+    def get(self):
+        return self.binding
 
 class Float(Type):
     def validate_py(self, value):
@@ -37,13 +44,20 @@ class String(Type):
         return type(value) == str
 
 class Function(Type):
-    def __init__(self, inners):
+    def __init__(self, inners, binding, name=None):
         self.gen = inners
+        super(name, binding)
     def __eq__(self, other):
         return type(self) == type(other) \
                 and all(s == o or s is None or o is None for s, o in zip(self.gen, other.gen))
     def validate_py(self, value):
         return hasattr(value, '__call__')
+    def __call__(self, *args):
+        if len(args) != len(self.gen) - 1:
+            raise ValueError("Arity incorrect, {} expected {} args.".format(self.name, len(self.gen) - 1))
+        if any(not typ.validate_py(arg) for arg, typ in zip(args, self.gen[:-1])):
+            raise ValueError("Type error in function invocation of {} and args {}".format(self.name, args))
+        return self.get()(*args)
 
 class SpecialForm(Type):
     def evaluate(self, tokens, context, index):
@@ -114,7 +128,12 @@ class SpecialFormFactory:
                     if allowed_sub_bodies[bodies_idx] == SpecialFormSpec.NAME:
                         if index >= len(tokens):
                             raise ValueError("Expected identifier to complete {}".format(name))
-                        bindings.append(factory_self.ensure_is_name(tokens[index]))
+                        if index + 1 < len(tokens) and tokens[index + 1] == '?':
+                            _, t, index = context.eval_type(tokens, index + 1)
+                        else:
+                            t = Type
+                            index = index + 1
+                        bindings.append(t(factory_self.ensure_is_name(tokens[index])))
                         bodies_idx += 1
                     elif allowed_sub_bodies[bodies_idx] == SpecialFormSpec.LIST_OF_NAME:
                         names = []
@@ -124,8 +143,12 @@ class SpecialFormFactory:
                             raise ValueError("Expected '(' to open list of names")
                         index += 1
                         while index < len(tokens) and tokens[index] != ')':
-                            names.append(factory_self.ensure_is_name(tokens[index]))
-                            index += 1
+                            if index + 1 < len(tokens) and tokens[index + 1] == '?':
+                                _, t, index = context.eval_type(tokens, index + 1)
+                            else:
+                                t = Type
+                                index = index + 1
+                            names.append(t(factory_self.ensure_is_name(tokens[index])))
                         if index >= len(tokens) or index[tokens] != ')':
                             raise ValueError("Expected ')' to end definition")
                         index += 1
@@ -155,9 +178,14 @@ class SpecialFormFactory:
                         bind, index = context.eval(tokens, index)
                 if index + 1 >= len(tokens) or tokens[index + 1]:
                     raise ValueError("Expected closing paren")
-                self.bind(binder(bindings))
+                self.bind(binder(*bindings))
                 return self, index + 2
 
         # indentation: outside the inner class now (factory_self and self are the same here)
         self.forms[name] = DefinedSpecialForm
         return DefinedSpecialForm
+
+def wrap_py_fn(fn, name, *types):
+    def wrapt(*args):
+        return fn(*(arg.get() for arg in args))
+    return Function(types, name, wrapt)
