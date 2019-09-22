@@ -3,7 +3,7 @@ Defines the base context which
 includes the general interfaces for defining
 contexts and types therein.
 """
-from types import *
+from sem_lang_types import *
 
 class AbstractContext:
     """
