@@ -27,8 +27,10 @@ class PlusTimesCtx:
         return name
     def validate_type(self, l, semantics, typ):
         return (typ == 'int' and l not in ['+', '*']) or (typ == 'fn' and l in ['+', '*'])
-    def is_abstraction_fn(self, name):
+    def is_special_form(self, name):
         return False
+    # Since nothing is a special form, this context will never be
+    # asked to evaluate tokens or type declarations
 
 def test_eval():
     pt = PlusTimesCtx()

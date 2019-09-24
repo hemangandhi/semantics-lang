@@ -37,7 +37,7 @@ class AbstractContext:
         """
         pass
     def get_type(self, semantics, name, *generic_args):
-        """
+       """
         Gets the type in the semantics with the name passed in.
         Generic arguments are also passed in with semantics.
 
@@ -71,6 +71,10 @@ class AbstractContext:
     def eval(self, tokens, index, name=None, finalize=False):
         """
         Evaluator used in parsing special forms.
+
+        The name is a way to inform the context of which special form.
+        It being none implies that the evaluation was started within a
+        special form.
 
         finalize being true means that the context is expected to output
         a readable, more user-friendly type instead of a potentially internal
