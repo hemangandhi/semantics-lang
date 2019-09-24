@@ -37,7 +37,7 @@ class AbstractContext:
         """
         pass
     def get_type(self, semantics, name, *generic_args):
-       """
+        """
         Gets the type in the semantics with the name passed in.
         Generic arguments are also passed in with semantics.
 
