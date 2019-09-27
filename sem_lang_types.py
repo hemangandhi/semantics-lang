@@ -12,8 +12,10 @@ from enum import Enum
 class Type:
     def __init__(self, name=None, binding=None):
         self.name = name
-        if binding is None or self.validate_py(binding):
-            self.binding = binding
+        if binding is None:
+            self.binding = None
+        elif self.validate_py(binding):
+            self.bind(binding)
         else:
             raise ValueError("{} is not a valid {}".format(binding, type(self)))
     def __eq__(self, other):
@@ -33,20 +35,40 @@ class Type:
 
 class Float(Type):
     def validate_py(self, value):
-        return type(value) == float
+        try:
+            v = float(value)
+            return True
+        except:
+            return False
+    def bind(self, value):
+        if not self.validate_py(value):
+            raise ValueError("{} is not a valid {}".format(value, type(self)))
+        self.binding = float(value)
 
 class Bool(Type):
     def validate_py(self, value):
-        return type(value) == bool
+        try:
+            v = bool(value)
+            return True
+        except:
+            return False
+    def bind(self, value):
+        if not self.validate_py(value):
+            raise ValueError("{} is not a valid {}".format(value, type(self)))
+        self.binding = bool(value)
 
 class String(Type):
     def validate_py(self, value):
-        return type(value) == str
+        return True
+    def bind(self, value):
+        if not self.validate_py(value):
+            raise ValueError("{} is not a valid {}".format(value, type(self)))
+        self.binding = str(value)
 
 class Function(Type):
     def __init__(self, inners, binding, name=None):
         self.gen = inners
-        super(name, binding)
+        super().__init__(name, binding)
     def __eq__(self, other):
         return type(self) == type(other) \
                 and all(s == o or s is None or o is None for s, o in zip(self.gen, other.gen))

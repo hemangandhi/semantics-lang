@@ -38,9 +38,9 @@ def test_base_call():
     assert ctx.call(literals['fn'], 5.6) == 5.6
 
 def test_base_type_getter():
-    ctx = ctxs.BaseContext(tok.evaluate)
+    ctx = ctxs.BaseContext(tok.evaluate, tok.parse_type, dict())
     assert ctx.get_type(None, 'string') == types.String()
     assert ctx.get_type(None, 'float') == types.Float()
     assert ctx.get_type(None, '->', types.Float(), types.Float())\
-            == types.Function((types.Float(), types.Float()))
+            == types.Function((types.Float(), types.Float()), lambda x: x)
     expect_value_error(lambda: ctx.get_type(None, 'not-a-type'))
